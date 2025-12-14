@@ -1,0 +1,1 @@
+ALTER TABLE `events` ADD `visibility` enum('public','private','members') DEFAULT 'public' NOT NULL;

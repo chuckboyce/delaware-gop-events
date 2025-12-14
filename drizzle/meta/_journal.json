@@ -1,5 +1,55 @@
 {
   "version": "7",
   "dialect": "mysql",
-  "entries": []
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1765679814967,
+      "tag": "0000_late_power_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1765679988962,
+      "tag": "0001_powerful_solo",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1765680135612,
+      "tag": "0002_sad_amphibian",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1765680376221,
+      "tag": "0003_romantic_meggan",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1765680412108,
+      "tag": "0004_talented_prodigy",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1765680519245,
+      "tag": "0005_remarkable_johnny_storm",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1765680677849,
+      "tag": "0006_dry_killraven",
+      "breakpoints": true
+    }
+  ]
 }
