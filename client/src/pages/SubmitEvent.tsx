@@ -40,6 +40,7 @@ const eventSubmissionSchema = z.object({
   organizationType: z.enum(["committee", "club", "group", "campaign", "party", "other"]).optional(),
   phone: z.string().optional(),
   message: z.string().optional(),
+  userTimezoneOffset: z.number().optional(),
 });
 
 type EventSubmissionFormData = z.infer<typeof eventSubmissionSchema>;
@@ -72,6 +73,9 @@ export default function SubmitEvent() {
 
   const onSubmit = async (data: any) => {
     try {
+      // Get user's timezone offset in minutes
+      const userTimezoneOffset = new Date().getTimezoneOffset();
+      
       // Submit event
       const eventResult = await submitEventMutation.mutateAsync({
         name: data.name,
@@ -82,6 +86,7 @@ export default function SubmitEvent() {
         isAllDay: data.isAllDay ? 1 : 0,
         durationValue: data.durationValue,
         durationUnit: data.durationUnit,
+        userTimezoneOffset: userTimezoneOffset,
         location: data.location,
         locationAddress: data.locationAddress,
         locationLatitude: data.locationLatitude,

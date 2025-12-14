@@ -32,6 +32,7 @@ const eventInputSchema = z.object({
   isAllDay: z.number().optional().default(0),
   durationValue: z.number().optional(),
   durationUnit: z.enum(["minutes", "hours", "days"]).optional(),
+  userTimezoneOffset: z.number().optional(),
   location: z.string().min(1, "Location is required").max(255),
   locationAddress: z.string().optional(),
   locationLatitude: z.string().optional(),
@@ -88,29 +89,63 @@ const adminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
 
 
 // Helper function to calculate endDate from startDate, startTime, and duration
-function calculateEndDate(startDate: Date, startTime?: string, durationValue?: number, durationUnit?: string): Date {
-  const endDate = new Date(startDate);
+// All dates are stored as UTC in the database
+function calculateEndDate(
+  startDate: Date,
+  startTime?: string,
+  durationValue?: number,
+  durationUnit?: string,
+  userTimezoneOffset?: number
+): Date {
+  // userTimezoneOffset is in minutes (e.g., 300 for EST which is UTC-5, -60 for CET which is UTC+1)
+  // If not provided, use the current system timezone offset
+  const tzOffset = userTimezoneOffset ?? new Date().getTimezoneOffset();
   
+  // Create a new date in UTC that represents the local date/time the user selected
+  // The startDate is a local date (from the date picker), we need to interpret it as local time
+  // and convert it to UTC
+  
+  // Get the year, month, day from the local date
+  const year = startDate.getFullYear();
+  const month = startDate.getMonth();
+  const day = startDate.getDate();
+  
+  // Get the hours and minutes from startTime, or use 0 if not provided
+  let hours = 0;
+  let minutes = 0;
   if (startTime) {
-    const [hours, minutes] = startTime.split(':').map(Number);
-    endDate.setHours(hours, minutes, 0, 0);
+    const [h, m] = startTime.split(':').map(Number);
+    hours = h;
+    minutes = m;
   }
   
+  // Create a UTC date with these values
+  // This creates a date as if the local time was UTC
+  const utcDate = new Date(Date.UTC(year, month, day, hours, minutes, 0, 0));
+  
+  // Now adjust for the timezone offset
+  // If user is in EST (offset=300, which is UTC-5), we need to add 5 hours to convert from local to UTC
+  // getTimezoneOffset() returns positive for west of UTC, so we subtract it (which adds for west)
+  // Subtract the offset because getTimezoneOffset() returns minutes WEST of UTC
+  // EST (UTC-5) has offset=300, so we subtract 300 to add 5 hours
+  utcDate.setUTCMinutes(utcDate.getUTCMinutes() + tzOffset);
+  
+  // Apply duration in UTC
   if (durationValue && durationUnit) {
     switch (durationUnit) {
       case 'minutes':
-        endDate.setMinutes(endDate.getMinutes() + durationValue);
+        utcDate.setUTCMinutes(utcDate.getUTCMinutes() + durationValue);
         break;
       case 'hours':
-        endDate.setHours(endDate.getHours() + durationValue);
+        utcDate.setUTCHours(utcDate.getUTCHours() + durationValue);
         break;
       case 'days':
-        endDate.setDate(endDate.getDate() + durationValue);
+        utcDate.setUTCDate(utcDate.getUTCDate() + durationValue);
         break;
     }
   }
   
-  return endDate;
+  return utcDate;
 }
 
 export const appRouter = router({
@@ -170,7 +205,7 @@ export const appRouter = router({
 
         // Calculate endDate from startTime and duration if provided
         const endDate = input.durationValue && input.durationUnit 
-          ? calculateEndDate(input.startDate, input.startTime, input.durationValue, input.durationUnit)
+          ? calculateEndDate(input.startDate, input.startTime, input.durationValue, input.durationUnit, input.userTimezoneOffset)
           : input.endDate;
 
         const event = await createEvent({

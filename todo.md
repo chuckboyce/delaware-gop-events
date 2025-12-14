@@ -101,3 +101,7 @@
 - [x] Write tests for date calculation logic (27 tests passing)
 - [ ] For recurring meetings, calculate dates starting from current month
 - [ ] For one-time meetings, use current date with provided time
+- [x] Fix timezone handling: convert local time to UTC before saving
+- [x] Capture user's timezone on frontend
+- [x] Update calculateEndDate to work with UTC
+- [x] Write tests for UTC timezone conversion (19 tests passing)
