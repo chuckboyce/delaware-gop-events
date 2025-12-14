@@ -30,6 +30,7 @@
 - [x] Implement event editing (users edit own, admins override any)
 - [x] Add success confirmation message after event submission
 - [x] Make logo clickable to return home
+- [x] Add login/signup buttons to navigation
 - [ ] Write vitest tests for admin procedures
 
 ## Phase 4: Public Event Listing

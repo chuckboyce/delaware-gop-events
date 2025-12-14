@@ -1,11 +1,12 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Calendar, Users, Globe, Lock } from "lucide-react";
+import { Calendar, Users, Globe, Lock, LogOut } from "lucide-react";
 import { useLocation } from "wouter";
+import { getLoginUrl } from "@/const";
 
 export default function Home() {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
   const [, setLocation] = useLocation();
 
   const calendarFeedUrl = typeof window !== "undefined" ? `${window.location.origin}/api/calendar.ics` : "/api/calendar.ics";
@@ -38,7 +39,7 @@ export default function Home() {
               Events
             </button>
             {isAuthenticated ? (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-4">
                 <span className="text-sm">{user?.name}</span>
                 <button
                   onClick={() => setLocation("/dashboard")}
@@ -46,14 +47,32 @@ export default function Home() {
                 >
                   Dashboard
                 </button>
+                <button
+                  onClick={async () => {
+                    await logout();
+                    setLocation("/");
+                  }}
+                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:opacity-90 transition-opacity flex items-center gap-2"
+                >
+                  <LogOut size={16} />
+                  Logout
+                </button>
               </div>
             ) : (
-              <button
-                onClick={() => setLocation("/submit")}
-                className="px-4 py-2 bg-accent text-white rounded-md hover:opacity-90 transition-opacity"
-              >
-                Submit Event
-              </button>
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => window.location.href = getLoginUrl()}
+                  className="px-4 py-2 border border-white text-white rounded-md hover:bg-white hover:text-primary transition-colors"
+                >
+                  Login
+                </button>
+                <button
+                  onClick={() => setLocation("/submit")}
+                  className="px-4 py-2 bg-accent text-white rounded-md hover:opacity-90 transition-opacity"
+                >
+                  Submit Event
+                </button>
+              </div>
             )}
           </div>
         </div>
