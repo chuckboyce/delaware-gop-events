@@ -4,6 +4,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router, protectedProcedure } from "./_core/trpc";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
+import { generateRSSFeed } from "./rss";
 import {
   createEvent,
   getEventById,
@@ -340,6 +341,14 @@ export const appRouter = router({
           request: rejected,
         };
       }),
+  }),
+
+  rss: router({
+    feed: publicProcedure.query(async () => {
+      const baseUrl = process.env.VITE_APP_ID ? `https://${process.env.VITE_APP_ID}.manus.space` : "http://localhost:3000";
+      const feed = await generateRSSFeed(baseUrl);
+      return feed;
+    }),
   }),
 });
 

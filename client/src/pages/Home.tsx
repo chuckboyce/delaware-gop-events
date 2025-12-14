@@ -17,7 +17,7 @@ export default function Home() {
             <div className="w-8 h-8 bg-accent rounded-md flex items-center justify-center font-bold">
               DE
             </div>
-            <h1 className="text-xl font-bold">Delaware Conservative Events</h1>
+            <h1 className="text-xl font-bold">Delaware Right Now</h1>
           </div>
           <div className="flex items-center gap-4">
             <button
@@ -53,11 +53,11 @@ export default function Home() {
         <div className="container">
           <div className="max-w-3xl">
             <h2 className="text-5xl font-bold mb-6 leading-tight">
-              Delaware's Unified Conservative Event Calendar
+              Delaware Right Now
             </h2>
             <p className="text-xl mb-8 opacity-90">
-              Discover, organize, and share Republican and conservative events across Delaware. 
-              A centralized platform for committees, clubs, campaigns, and community leaders.
+              A community-driven calendar for conservative and Republican events across Delaware. 
+              Discover, organize, and share with committees, clubs, campaigns, and community leaders.
             </p>
             <div className="flex gap-4">
               <Button
@@ -174,7 +174,7 @@ export default function Home() {
             <div>
               <h4 className="font-semibold mb-4">About</h4>
               <p className="text-sm opacity-80">
-                A centralized platform for conservative and Republican events in Delaware.
+                Delaware Right Now is a community-driven calendar for conservative and Republican events across Delaware.
               </p>
             </div>
             <div>
@@ -193,7 +193,7 @@ export default function Home() {
             </div>
           </div>
           <div className="border-t border-white/20 pt-8 text-center text-sm opacity-80">
-            <p>&copy; 2025 Delaware Conservative Event Database. All rights reserved.</p>
+            <p>&copy; 2025 Delaware Right Now. All rights reserved.</p>
           </div>
         </div>
       </footer>

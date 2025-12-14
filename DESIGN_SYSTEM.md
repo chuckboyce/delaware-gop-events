@@ -1,7 +1,7 @@
-# Delaware Conservative Event Database - Design System
+# Delaware Right Now - Design System
 
 ## Design Philosophy
-Modern, clean, and professional with subtle patriotic elements. Conservative in execution, contemporary in approach. Community-focused and authoritative without being corporate.
+Modern, clean, and professional with subtle patriotic elements. Professional in execution, contemporary in approach. Community-focused and authoritative without being corporate.
 
 ## Color Palette
 

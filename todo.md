@@ -31,12 +31,13 @@
 - [ ] Write vitest tests for admin procedures
 
 ## Phase 4: Public Event Listing
-- [ ] Create public event listing page
-- [ ] Implement date range filtering
-- [ ] Implement search functionality
-- [ ] Implement event type filtering
+- [x] Create public event listing page
+- [x] Implement date range filtering
+- [x] Implement search functionality
+- [x] Implement event type filtering
 - [ ] Add pagination support
 - [ ] Create event detail view page
+- [ ] Add to Calendar feature (Google Calendar, Outlook, iCal)
 - [ ] Write vitest tests for public listing procedures
 
 ## Phase 5: RSS Feed Implementation
@@ -64,6 +65,7 @@
 
 
 ## Future Enhancements
+- [ ] Social sharing of events (Facebook, Twitter, LinkedIn, email)
 - [ ] User event notifications (subscribe to categories, organizations, date ranges)
 - [ ] Authenticated RSS feed for authorized organizations (full details on private/members events)
 - [ ] API key system for organization access to full event data
