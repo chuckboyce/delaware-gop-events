@@ -129,14 +129,10 @@ export const appRouter = router({
     submit: publicProcedure
       .input(eventInputSchema)
       .mutation(async ({ input, ctx }) => {
-        // If user is not authenticated, they can still submit but event will be pending
-        // If user is authenticated and is a representative, event is auto-approved
+        // Public users can submit (event pending)
+        // Authenticated representatives/admins can submit (auto-approved)
         const userId = ctx.user?.id;
-        if (!userId) {
-          throw new TRPCError({ code: "UNAUTHORIZED", message: "Must be logged in to submit events" });
-        }
-
-        const isRepresentative = ctx.user?.role === "representative";
+        const isRepresentative = ctx.user?.role === "representative" || ctx.user?.role === "admin";
 
         const event = await createEvent({
           ...input,

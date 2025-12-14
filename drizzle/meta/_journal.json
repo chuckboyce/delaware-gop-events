@@ -50,6 +50,13 @@
       "when": 1765680677849,
       "tag": "0006_dry_killraven",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1765683995796,
+      "tag": "0007_mixed_night_thrasher",
+      "breakpoints": true
     }
   ]
 }

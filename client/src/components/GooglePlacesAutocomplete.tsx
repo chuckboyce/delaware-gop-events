@@ -42,7 +42,7 @@ export default function GooglePlacesAutocomplete({
 
   // Initialize Google Places API
   useEffect(() => {
-    const apiKey = import.meta.env.VITE_GOOGLE_PLACES_API_KEY;
+    const apiKey = import.meta.env.VITE_FRONTEND_FORGE_API_KEY || import.meta.env.VITE_GOOGLE_PLACES_API_KEY;
 
     if (!apiKey) {
       console.warn("Google Places API key not configured");

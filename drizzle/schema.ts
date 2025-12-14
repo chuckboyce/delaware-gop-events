@@ -66,7 +66,7 @@ export const events = mysqlTable("events", {
   
   // Submission and approval workflow
   status: mysqlEnum("status", ["pending", "approved", "rejected"]).default("pending").notNull(),
-  submittedBy: int("submittedBy").notNull(),
+  submittedBy: int("submittedBy"),
   submittedAt: timestamp("submittedAt").defaultNow().notNull(),
   approvedBy: int("approvedBy"),
   approvedAt: timestamp("approvedAt"),
