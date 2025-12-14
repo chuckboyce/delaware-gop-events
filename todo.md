@@ -106,3 +106,7 @@
 - [x] Update calculateEndDate to work with UTC
 - [x] Write tests for UTC timezone conversion (19 tests passing)
 
+- [x] Debug Google Places autocomplete: API key endpoint working correctly
+- [x] Verify Google Places API key is being passed correctly to frontend
+- [ ] Fix Full Address field rendering issue (field not visible on form despite code being present)
+- [ ] Re-enable Google Places autocomplete once rendering issue is resolved

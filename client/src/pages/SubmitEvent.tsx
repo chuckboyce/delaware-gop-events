@@ -466,25 +466,8 @@ export default function SubmitEvent() {
                 {errors.location && typeof errors.location === 'object' && 'message' in errors.location && <p className="text-error text-sm mt-1">{String(errors.location.message)}</p>}
               </div>
 
-              {/* Address with Google Places Autocomplete */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Full Address
-                </label>
-                <GooglePlacesAutocomplete
-                  value={watch("locationAddress") || ""}
-                  onChange={(value: string, details?: { lat?: number; lng?: number; address?: string }) => {
-                    setValue("locationAddress", value);
-                    if (details?.lat) setValue("locationLatitude", details.lat.toString());
-                    if (details?.lng) setValue("locationLongitude", details.lng.toString());
-                  }}
-                  onAddressSelect={(address: string, lat: number, lng: number) => {
-                    setValue("locationAddress", address);
-                    setValue("locationLatitude", lat.toString());
-                    setValue("locationLongitude", lng.toString());
-                  }}
-                />
-              </div>
+              {/* Address field - temporarily hidden while debugging */}
+              {/* TODO: Re-enable Full Address field with Google Places autocomplete */}
             </div>
 
             {/* Organizer Information Section */}

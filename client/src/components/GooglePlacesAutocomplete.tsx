@@ -11,10 +11,9 @@ interface GooglePlacesAutocompleteProps {
 }
 
 interface PlacePrediction {
-  place_id: string;
-  description: string;
-  main_text: string;
-  secondary_text?: string;
+  placeId: string;
+  mainText: string;
+  secondaryText?: string;
 }
 
 export default function GooglePlacesAutocomplete({
@@ -34,6 +33,7 @@ export default function GooglePlacesAutocomplete({
   const containerRef = useRef<HTMLDivElement>(null);
   const scriptLoadedRef = useRef(false);
   const initAttemptedRef = useRef(false);
+  const sessionTokenRef = useRef<any>(null);
 
   // Fetch API key from backend
   const { data: configData, isLoading: isLoadingConfig } = trpc.config.googlePlacesApiKey.useQuery();
@@ -61,11 +61,20 @@ export default function GooglePlacesAutocomplete({
     const initializeServices = () => {
       try {
         if (w.google?.maps?.places) {
-          console.log("Initializing Google Places services");
-          autocompleteServiceRef.current = new w.google.maps.places.AutocompleteService();
-          if (containerRef.current) {
+          console.log("Initializing Google Places services with new API");
+          // Use the new API if available
+          if (w.google.maps.places.AutocompleteService) {
+            autocompleteServiceRef.current = new w.google.maps.places.AutocompleteService();
+          }
+          if (w.google.maps.places.PlacesService && containerRef.current) {
             placesServiceRef.current = new w.google.maps.places.PlacesService(containerRef.current);
           }
+          
+          // Create session token for new API
+          if (w.google.maps.places.AutocompleteSessionToken) {
+            sessionTokenRef.current = new w.google.maps.places.AutocompleteSessionToken();
+          }
+          
           setApiLoaded(true);
           setApiError(null);
           scriptLoadedRef.current = true;
@@ -88,11 +97,10 @@ export default function GooglePlacesAutocomplete({
       return;
     }
 
-    // Load Google Maps script
+    // Load Google Maps script with new API
     const script = document.createElement("script");
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&loading=async`;
     script.async = true;
-    script.defer = true;
     
     script.onload = () => {
       console.log("Google Maps script loaded");
@@ -135,15 +143,23 @@ export default function GooglePlacesAutocomplete({
     setIsLoading(true);
 
     try {
+      // Use the callback-based API (works with both old and new versions)
       autocompleteServiceRef.current.getPlacePredictions(
         {
           input: inputValue,
           componentRestrictions: { country: "us" },
+          sessionToken: sessionTokenRef.current,
         },
-        (predictions: PlacePrediction[] | null, status: string) => {
+        (predictions: any[] | null, status: string) => {
           console.log(`Autocomplete status: ${status}, predictions: ${predictions?.length || 0}`);
           if (predictions && status === "OK") {
-            setPredictions(predictions.slice(0, 8));
+            // Map predictions to our interface
+            const mappedPredictions = predictions.map((p: any) => ({
+              placeId: p.place_id,
+              mainText: p.main_text || p.description,
+              secondaryText: p.secondary_text,
+            }));
+            setPredictions(mappedPredictions.slice(0, 8));
             setIsOpen(true);
           } else if (status === "ZERO_RESULTS") {
             setPredictions([]);
@@ -162,7 +178,7 @@ export default function GooglePlacesAutocomplete({
 
   // Handle prediction selection
   const handleSelectPrediction = (prediction: PlacePrediction) => {
-    onChange(prediction.description);
+    onChange(prediction.mainText);
     setPredictions([]);
     setIsOpen(false);
 
@@ -171,8 +187,9 @@ export default function GooglePlacesAutocomplete({
       try {
         placesServiceRef.current.getDetails(
           {
-            placeId: prediction.place_id,
+            placeId: prediction.placeId,
             fields: ["formatted_address", "geometry", "address_components"],
+            sessionToken: sessionTokenRef.current,
           },
           (place: any | null, status: string) => {
             if (status === "OK" && place?.geometry?.location) {
@@ -182,11 +199,11 @@ export default function GooglePlacesAutocomplete({
               const lng = typeof place.geometry.location.lng === 'function' 
                 ? place.geometry.location.lng() 
                 : place.geometry.location.lng;
-              const address = place.formatted_address || prediction.description;
+              const address = place.formatted_address || prediction.mainText;
               
               console.log(`Selected: ${address}, Lat: ${lat}, Lng: ${lng}`);
               
-              onChange(prediction.description, {
+              onChange(prediction.mainText, {
                 lat,
                 lng,
                 address,
@@ -194,6 +211,12 @@ export default function GooglePlacesAutocomplete({
 
               if (onAddressSelect) {
                 onAddressSelect(address, lat, lng);
+              }
+
+              // Create a new session token for the next request
+              const w = window as any;
+              if (w.google?.maps?.places?.AutocompleteSessionToken) {
+                sessionTokenRef.current = new w.google.maps.places.AutocompleteSessionToken();
               }
             } else {
               console.warn(`Place details status: ${status}`);
@@ -213,16 +236,15 @@ export default function GooglePlacesAutocomplete({
         value={value}
         onChange={(e) => handleInputChange(e.target.value)}
         placeholder={placeholder}
-        className={className}
+        className={`w-full px-4 py-3 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-accent ${className}`}
         onFocus={() => value && predictions.length > 0 && setIsOpen(true)}
         onBlur={() => setTimeout(() => setIsOpen(false), 200)}
         autoComplete="off"
-        disabled={!apiLoaded || isLoadingConfig}
       />
 
-      {(!apiLoaded || isLoadingConfig) && (
+      {isLoadingConfig && (
         <div className="absolute right-3 top-3 text-muted-foreground text-xs">
-          {apiError ? "⚠️" : "Loading..."}
+          Loading...
         </div>
       )}
 
@@ -232,26 +254,26 @@ export default function GooglePlacesAutocomplete({
         </div>
       )}
 
-      {isOpen && predictions.length > 0 && (
+      {isOpen && predictions.length > 0 && apiLoaded && (
         <div className="absolute top-full left-0 right-0 mt-1 bg-background border border-border rounded-md shadow-lg z-50">
           {predictions.map((prediction) => (
             <button
-              key={prediction.place_id}
+              key={prediction.placeId}
               onClick={() => handleSelectPrediction(prediction)}
               className="w-full text-left px-4 py-3 hover:bg-muted transition-colors border-b border-border last:border-b-0"
             >
-              <div className="font-medium text-foreground text-sm">{prediction.main_text}</div>
-              {prediction.secondary_text && (
-                <div className="text-xs text-muted-foreground">{prediction.secondary_text}</div>
+              <div className="font-medium text-foreground text-sm">{prediction.mainText}</div>
+              {prediction.secondaryText && (
+                <div className="text-xs text-muted-foreground">{prediction.secondaryText}</div>
               )}
             </button>
           ))}
         </div>
       )}
 
-      {apiError && (
+      {apiError && !isLoadingConfig && (
         <div className="text-xs text-red-500 mt-1">
-          {apiError}
+          {apiError} - You can still enter the address manually
         </div>
       )}
     </div>
