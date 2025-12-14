@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, tinyint } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -63,6 +63,11 @@ export const events = mysqlTable("events", {
   // Event classification
   eventType: mysqlEnum("eventType", ["fundraiser", "rally", "meeting", "training", "social", "other"]).default("other").notNull(),
   visibility: mysqlEnum("visibility", ["public", "private", "members"]).default("public").notNull(),
+  
+  // Recurring meeting fields (for meeting type only)
+  isRecurring: tinyint("isRecurring").default(0).notNull(),
+  recurringPattern: varchar("recurringPattern", { length: 50 }), // "nth-day-of-week" format
+  recurringMonths: varchar("recurringMonths", { length: 255 }), // JSON array of month numbers [1-12]
   
   // Submission and approval workflow
   status: mysqlEnum("status", ["pending", "approved", "rejected"]).default("pending").notNull(),

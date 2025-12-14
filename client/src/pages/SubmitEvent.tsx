@@ -14,6 +14,10 @@ import GooglePlacesAutocomplete from "@/components/GooglePlacesAutocomplete";
 const eventSubmissionSchema = z.object({
   name: z.string().min(1, "Event title is required").max(255),
   description: z.string().min(1, "Description is required"),
+  eventType: z.enum(["fundraiser", "rally", "meeting", "training", "social", "other"]),
+  isRecurring: z.boolean().default(false),
+  recurringPattern: z.string().optional(),
+  recurringMonths: z.string().optional(),
   startDate: z.date(),
   endDate: z.date().optional(),
   location: z.string().min(1, "Location is required").max(255),
@@ -26,7 +30,6 @@ const eventSubmissionSchema = z.object({
   organizerUrl: z.string().url().optional(),
   eventUrl: z.string().url().optional(),
   imageUrl: z.string().url().optional(),
-  eventType: z.enum(["fundraiser", "rally", "meeting", "training", "social", "other"]),
   visibility: z.enum(["public", "private", "members"]),
   requestLogin: z.boolean().optional().default(false),
   organizationName: z.string().optional(),
@@ -55,8 +58,13 @@ export default function SubmitEvent() {
       eventType: "other",
       visibility: "public",
       requestLogin: false,
+      isRecurring: false,
     },
   });
+
+  const eventType = watch("eventType");
+  const isRecurring = watch("isRecurring");
+  const recurringMonths = watch("recurringMonths");
 
   const onSubmit = async (data: any) => {
     try {
@@ -78,6 +86,9 @@ export default function SubmitEvent() {
         imageUrl: data.imageUrl,
         eventType: data.eventType,
         visibility: data.visibility,
+        isRecurring: (data.isRecurring && data.eventType === "meeting") ? 1 : 0,
+        recurringPattern: (data.isRecurring && data.eventType === "meeting") ? data.recurringPattern : null,
+        recurringMonths: (data.isRecurring && data.eventType === "meeting") ? data.recurringMonths : null,
       });
 
       // Show appropriate success message based on user type
@@ -115,6 +126,83 @@ export default function SubmitEvent() {
     } catch (error) {
       toast.error("Failed to submit event. Please try again.");
       console.error(error);
+    }
+  };
+
+  const nthDayOptions = [
+    { value: "1st-monday", label: "1st Monday" },
+    { value: "1st-tuesday", label: "1st Tuesday" },
+    { value: "1st-wednesday", label: "1st Wednesday" },
+    { value: "1st-thursday", label: "1st Thursday" },
+    { value: "1st-friday", label: "1st Friday" },
+    { value: "1st-saturday", label: "1st Saturday" },
+    { value: "1st-sunday", label: "1st Sunday" },
+    { value: "2nd-monday", label: "2nd Monday" },
+    { value: "2nd-tuesday", label: "2nd Tuesday" },
+    { value: "2nd-wednesday", label: "2nd Wednesday" },
+    { value: "2nd-thursday", label: "2nd Thursday" },
+    { value: "2nd-friday", label: "2nd Friday" },
+    { value: "2nd-saturday", label: "2nd Saturday" },
+    { value: "2nd-sunday", label: "2nd Sunday" },
+    { value: "3rd-monday", label: "3rd Monday" },
+    { value: "3rd-tuesday", label: "3rd Tuesday" },
+    { value: "3rd-wednesday", label: "3rd Wednesday" },
+    { value: "3rd-thursday", label: "3rd Thursday" },
+    { value: "3rd-friday", label: "3rd Friday" },
+    { value: "3rd-saturday", label: "3rd Saturday" },
+    { value: "3rd-sunday", label: "3rd Sunday" },
+    { value: "4th-monday", label: "4th Monday" },
+    { value: "4th-tuesday", label: "4th Tuesday" },
+    { value: "4th-wednesday", label: "4th Wednesday" },
+    { value: "4th-thursday", label: "4th Thursday" },
+    { value: "4th-friday", label: "4th Friday" },
+    { value: "4th-saturday", label: "4th Saturday" },
+    { value: "4th-sunday", label: "4th Sunday" },
+    { value: "last-monday", label: "Last Monday" },
+    { value: "last-tuesday", label: "Last Tuesday" },
+    { value: "last-wednesday", label: "Last Wednesday" },
+    { value: "last-thursday", label: "Last Thursday" },
+    { value: "last-friday", label: "Last Friday" },
+    { value: "last-saturday", label: "Last Saturday" },
+    { value: "last-sunday", label: "Last Sunday" },
+  ];
+
+  const monthOptions = [
+    { value: "1", label: "January" },
+    { value: "2", label: "February" },
+    { value: "3", label: "March" },
+    { value: "4", label: "April" },
+    { value: "5", label: "May" },
+    { value: "6", label: "June" },
+    { value: "7", label: "July" },
+    { value: "8", label: "August" },
+    { value: "9", label: "September" },
+    { value: "10", label: "October" },
+    { value: "11", label: "November" },
+    { value: "12", label: "December" },
+  ];
+
+  const handleMonthToggle = (monthValue: string) => {
+    const currentMonths = recurringMonths ? JSON.parse(recurringMonths) : [];
+    const monthNum = parseInt(monthValue);
+    const index = currentMonths.indexOf(monthNum);
+    
+    if (index > -1) {
+      currentMonths.splice(index, 1);
+    } else {
+      currentMonths.push(monthNum);
+    }
+    
+    currentMonths.sort((a: number, b: number) => a - b);
+    setValue("recurringMonths", JSON.stringify(currentMonths));
+  };
+
+  const getSelectedMonths = () => {
+    if (!recurringMonths) return [];
+    try {
+      return JSON.parse(recurringMonths);
+    } catch {
+      return [];
     }
   };
 
@@ -164,6 +252,93 @@ export default function SubmitEvent() {
                 {errors.description && typeof errors.description === 'object' && 'message' in errors.description && <p className="text-error text-sm mt-1">{String(errors.description.message)}</p>}
               </div>
 
+              {/* Event Type - MOVED ABOVE DATE/TIME */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Event Type *
+                </label>
+                <select
+                  {...register("eventType")}
+                  className="w-full px-4 py-3 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-accent"
+                >
+                  <option value="other">Select event type</option>
+                  <option value="fundraiser">Fundraiser</option>
+                  <option value="rally">Rally</option>
+                  <option value="meeting">Meeting</option>
+                  <option value="training">Training</option>
+                  <option value="social">Social Event</option>
+                  <option value="other">Other</option>
+                </select>
+                {errors.eventType && typeof errors.eventType === 'object' && 'message' in errors.eventType && <p className="text-error text-sm mt-1">{String(errors.eventType.message)}</p>}
+              </div>
+
+              {/* Recurring Meeting Options - ONLY FOR MEETING TYPE */}
+              {eventType === "meeting" && (
+                <div className="mb-6 p-4 bg-accent/10 rounded-md border border-accent/20">
+                  <div className="mb-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        {...register("isRecurring")}
+                        className="w-4 h-4"
+                      />
+                      <span className="text-sm font-medium text-foreground">
+                        This is a recurring monthly meeting
+                      </span>
+                    </label>
+                  </div>
+
+                  {isRecurring && (
+                    <>
+                      {/* Nth Day of Week Selection */}
+                      <div className="mb-6">
+                        <label className="block text-sm font-medium text-foreground mb-2">
+                          Meeting Pattern *
+                        </label>
+                        <select
+                          {...register("recurringPattern")}
+                          className="w-full px-4 py-3 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-accent"
+                        >
+                          <option value="">Select meeting pattern</option>
+                          {nthDayOptions.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                        {errors.recurringPattern && typeof errors.recurringPattern === 'object' && 'message' in errors.recurringPattern && <p className="text-error text-sm mt-1">{String(errors.recurringPattern.message)}</p>}
+                      </div>
+
+                      {/* Month Selection */}
+                      <div>
+                        <label className="block text-sm font-medium text-foreground mb-3">
+                          Active Months *
+                        </label>
+                        <p className="text-xs text-muted-foreground mb-3">
+                          Select which months this meeting occurs (for breaks during the year)
+                        </p>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                          {monthOptions.map((month) => (
+                            <label key={month.value} className="flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={getSelectedMonths().includes(parseInt(month.value))}
+                                onChange={() => handleMonthToggle(month.value)}
+                                className="w-4 h-4"
+                              />
+                              <span className="text-sm text-foreground">{month.label}</span>
+                            </label>
+                          ))}
+                        </div>
+                        {getSelectedMonths().length === 0 && isRecurring && (
+                          <p className="text-error text-sm mt-2">Select at least one month</p>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+
               {/* Date and Time */}
               <div className="grid md:grid-cols-2 gap-6 mb-6">
                 <div>
@@ -188,26 +363,6 @@ export default function SubmitEvent() {
                   />
                   {errors.endDate && typeof errors.endDate === 'object' && 'message' in errors.endDate && <p className="text-error text-sm mt-1">{String(errors.endDate.message)}</p>}
                 </div>
-              </div>
-
-              {/* Event Type */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Event Type *
-                </label>
-                <select
-                  {...register("eventType")}
-                  className="w-full px-4 py-3 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-accent"
-                >
-                  <option value="other">Select event type</option>
-                  <option value="fundraiser">Fundraiser</option>
-                  <option value="rally">Rally</option>
-                  <option value="meeting">Meeting</option>
-                  <option value="training">Training</option>
-                  <option value="social">Social Event</option>
-                  <option value="other">Other</option>
-                </select>
-                {errors.eventType && typeof errors.eventType === 'object' && 'message' in errors.eventType && <p className="text-error text-sm mt-1">{String(errors.eventType.message)}</p>}
               </div>
 
               {/* Visibility */}
@@ -247,34 +402,28 @@ export default function SubmitEvent() {
                 {errors.location && typeof errors.location === 'object' && 'message' in errors.location && <p className="text-error text-sm mt-1">{String(errors.location.message)}</p>}
               </div>
 
-              {/* Address */}
+              {/* Address with Google Places Autocomplete */}
               <div className="mb-6">
                 <label className="block text-sm font-medium text-foreground mb-2">
                   Full Address
                 </label>
                 <GooglePlacesAutocomplete
                   value={watch("locationAddress") || ""}
-                  onChange={(value, details) => {
+                  onChange={(value: string, details?: { lat?: number; lng?: number; address?: string }) => {
                     setValue("locationAddress", value);
-                    if (details?.lat && details?.lng) {
-                      setValue("locationLatitude", String(details.lat));
-                      setValue("locationLongitude", String(details.lng));
-                    }
+                    if (details?.lat) setValue("locationLatitude", details.lat.toString());
+                    if (details?.lng) setValue("locationLongitude", details.lng.toString());
                   }}
-                  placeholder="Street address, city, state, zip"
-                  className="w-full px-4 py-3 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-accent"
+                  onAddressSelect={(address: string, lat: number, lng: number) => {
+                    setValue("locationAddress", address);
+                    setValue("locationLatitude", lat.toString());
+                    setValue("locationLongitude", lng.toString());
+                  }}
                 />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Start typing to see address suggestions powered by Google Places
-                </p>
               </div>
-
-              {/* Hidden coordinates - captured automatically from Google Places */}
-              <input type="hidden" {...register("locationLatitude")} />
-              <input type="hidden" {...register("locationLongitude")} />
             </div>
 
-            {/* Organizer Section */}
+            {/* Organizer Information Section */}
             <div>
               <h2 className="text-2xl font-semibold text-foreground mb-6 pb-4 border-b border-border">
                 Organizer Information
@@ -302,13 +451,13 @@ export default function SubmitEvent() {
                 <input
                   type="text"
                   {...register("organizerName")}
-                  placeholder="Full name"
+                  placeholder="Your full name"
                   className="w-full px-4 py-3 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-accent"
                 />
                 {errors.organizerName && typeof errors.organizerName === 'object' && 'message' in errors.organizerName && <p className="text-error text-sm mt-1">{String(errors.organizerName.message)}</p>}
               </div>
 
-              {/* Email */}
+              {/* Organizer Email */}
               <div className="mb-6">
                 <label className="block text-sm font-medium text-foreground mb-2">
                   Email *
@@ -322,20 +471,21 @@ export default function SubmitEvent() {
                 {errors.organizerEmail && typeof errors.organizerEmail === 'object' && 'message' in errors.organizerEmail && <p className="text-error text-sm mt-1">{String(errors.organizerEmail.message)}</p>}
               </div>
 
-              {/* Phone */}
+              {/* Organizer Phone */}
               <div className="mb-6">
                 <label className="block text-sm font-medium text-foreground mb-2">
-                  Phone
+                  Phone Number
                 </label>
                 <input
                   type="tel"
                   {...register("organizerPhone")}
-                  placeholder="(555) 123-4567"
+                  placeholder="(302) 555-0000"
                   className="w-full px-4 py-3 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-accent"
                 />
+                {errors.organizerPhone && typeof errors.organizerPhone === 'object' && 'message' in errors.organizerPhone && <p className="text-error text-sm mt-1">{String(errors.organizerPhone.message)}</p>}
               </div>
 
-              {/* Website */}
+              {/* Organizer URL */}
               <div className="mb-6">
                 <label className="block text-sm font-medium text-foreground mb-2">
                   Website
@@ -346,12 +496,38 @@ export default function SubmitEvent() {
                   placeholder="https://example.com"
                   className="w-full px-4 py-3 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-accent"
                 />
+                {errors.organizerUrl && typeof errors.organizerUrl === 'object' && 'message' in errors.organizerUrl && <p className="text-error text-sm mt-1">{String(errors.organizerUrl.message)}</p>}
               </div>
+
+              {/* Request Login Checkbox */}
+              <div className="mb-6 p-4 bg-primary/10 rounded-md border border-primary/20">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={requestLogin}
+                    onChange={(e) => setRequestLogin(e.target.checked)}
+                    className="w-4 h-4"
+                  />
+                  <span className="text-sm font-medium text-foreground">
+                    Request organizer login access
+                  </span>
+                </label>
+                <p className="text-xs text-muted-foreground mt-2">
+                  We'll vet your request and contact you within 24 hours to set up your account for direct event submission.
+                </p>
+              </div>
+            </div>
+
+            {/* Event Details Section */}
+            <div>
+              <h2 className="text-2xl font-semibold text-foreground mb-6 pb-4 border-b border-border">
+                Additional Details
+              </h2>
 
               {/* Event URL */}
               <div className="mb-6">
                 <label className="block text-sm font-medium text-foreground mb-2">
-                  Event URL / Registration Link
+                  Event Website/Registration URL
                 </label>
                 <input
                   type="url"
@@ -359,81 +535,21 @@ export default function SubmitEvent() {
                   placeholder="https://example.com/event"
                   className="w-full px-4 py-3 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-accent"
                 />
+                {errors.eventUrl && typeof errors.eventUrl === 'object' && 'message' in errors.eventUrl && <p className="text-error text-sm mt-1">{String(errors.eventUrl.message)}</p>}
               </div>
-            </div>
 
-            {/* Request Login Section */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-              <div className="flex items-start gap-4">
+              {/* Image URL */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Event Image URL
+                </label>
                 <input
-                  type="checkbox"
-                  id="requestLogin"
-                  checked={requestLogin}
-                  onChange={(e) => {
-                    setRequestLogin(e.target.checked);
-                    setValue("requestLogin", e.target.checked);
-                  }}
-                  className="mt-1 w-5 h-5 text-accent rounded"
+                  type="url"
+                  {...register("imageUrl")}
+                  placeholder="https://example.com/image.jpg"
+                  className="w-full px-4 py-3 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-accent"
                 />
-                <div className="flex-1">
-                  <label htmlFor="requestLogin" className="block font-medium text-foreground mb-2">
-                    Request Organizer Login Access
-                  </label>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Check this box if you'd like to request a login account to manage multiple events for your organization. 
-                    We'll review your request and contact you to set up your account.
-                  </p>
-
-                  {requestLogin && (
-                    <div className="space-y-4 mt-4 pt-4 border-t border-blue-200">
-                      {/* Organization Name */}
-                      <div>
-                        <label className="block text-sm font-medium text-foreground mb-2">
-                          Organization Name *
-                        </label>
-                        <input
-                          type="text"
-                          {...register("organizationName")}
-                          placeholder="e.g., Delaware Republican State Committee"
-                          className="w-full px-4 py-3 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-accent"
-                        />
-                        {errors.organizationName && typeof errors.organizationName === 'object' && 'message' in errors.organizationName && <p className="text-error text-sm mt-1">{String(errors.organizationName.message)}</p>}
-                      </div>
-
-                      {/* Organization Type */}
-                      <div>
-                        <label className="block text-sm font-medium text-foreground mb-2">
-                          Organization Type
-                        </label>
-                        <select
-                          {...register("organizationType")}
-                          className="w-full px-4 py-3 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-accent"
-                        >
-                          <option value="">Select type</option>
-                          <option value="committee">Committee</option>
-                          <option value="club">Club</option>
-                          <option value="group">Group</option>
-                          <option value="campaign">Campaign</option>
-                          <option value="party">Party</option>
-                          <option value="other">Other</option>
-                        </select>
-                      </div>
-
-                      {/* Message */}
-                      <div>
-                        <label className="block text-sm font-medium text-foreground mb-2">
-                          Message (Optional)
-                        </label>
-                        <textarea
-                          {...register("message")}
-                          placeholder="Tell us about your organization..."
-                          rows={3}
-                          className="w-full px-4 py-3 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-accent"
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
+                {errors.imageUrl && typeof errors.imageUrl === 'object' && 'message' in errors.imageUrl && <p className="text-error text-sm mt-1">{String(errors.imageUrl.message)}</p>}
               </div>
             </div>
 
@@ -442,17 +558,9 @@ export default function SubmitEvent() {
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="flex-1 bg-primary hover:bg-blue-900 text-white py-3"
+                className="flex-1 bg-accent hover:bg-accent/90 text-white font-semibold py-3 rounded-md transition-colors"
               >
                 {isSubmitting ? "Submitting..." : "Submit Event"}
-              </Button>
-              <Button
-                type="button"
-                onClick={() => setLocation("/")}
-                variant="outline"
-                className="flex-1 py-3"
-              >
-                Cancel
               </Button>
             </div>
           </form>

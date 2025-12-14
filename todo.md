@@ -35,6 +35,10 @@
 - [ ] Add fallback full address field with street autocomplete
 - [x] Remove latitude/longitude display fields from form (save silently to database)
 - [x] Add organizer/organization filtering to events listing
+- [x] Add recurring monthly meeting support (nth day-of-week + month selection)
+- [x] Move event type field above date/time on submission form
+- [x] Add conditional recurring options (only for meeting type)
+- [x] Write vitest tests for recurring meeting feature (10 tests passing)
 - [ ] Write vitest tests for admin procedures
 
 ## Phase 4: Public Event Listing

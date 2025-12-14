@@ -40,6 +40,9 @@ const eventInputSchema = z.object({
   imageUrl: z.string().url().optional(),
   eventType: z.enum(["fundraiser", "rally", "meeting", "training", "social", "other"]).default("other"),
   visibility: z.enum(["public", "private", "members"]).default("public"),
+  isRecurring: z.number().optional().default(0),
+  recurringPattern: z.string().optional(),
+  recurringMonths: z.string().optional(),
 });
 
 const updateEventSchema = z.object({
