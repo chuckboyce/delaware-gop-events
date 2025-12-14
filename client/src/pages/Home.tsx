@@ -8,6 +8,14 @@ export default function Home() {
   const { user, isAuthenticated } = useAuth();
   const [, setLocation] = useLocation();
 
+  const calendarFeedUrl = typeof window !== "undefined" ? `${window.location.origin}/api/calendar.ics` : "/api/calendar.ics";
+  const rssFeedUrl = typeof window !== "undefined" ? `${window.location.origin}/api/rss` : "/api/rss";
+
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    alert(`${label} copied to clipboard!`);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Navigation */}
@@ -140,6 +148,78 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Subscribe & Syndicate Section */}
+      <section className="py-20 bg-white border-t border-border">
+        <div className="container">
+          <h3 className="text-3xl font-bold text-center mb-4 text-foreground">
+            Subscribe &amp; Syndicate
+          </h3>
+          <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
+            Add Delaware Right Now events to your website, calendar app, or email. Choose the method that works best for you.
+          </p>
+
+          <div className="grid md:grid-cols-2 gap-8 mb-12">
+            {/* Calendar Feed */}
+            <Card className="p-8">
+              <h4 className="text-xl font-semibold mb-4 text-foreground flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-accent" />
+                Add to Your Calendar
+              </h4>
+              <p className="text-muted-foreground mb-6">
+                Subscribe to our calendar feed in Google Calendar, Outlook, Apple Calendar, or any calendar app that supports iCal.
+              </p>
+              <div className="bg-muted p-4 rounded-md mb-4 font-mono text-sm break-all">
+                {calendarFeedUrl}
+              </div>
+              <ol className="text-sm text-muted-foreground space-y-2 mb-4">
+                <li><strong>1.</strong> Copy the URL above</li>
+                <li><strong>2.</strong> Open your calendar app</li>
+                <li><strong>3.</strong> Select "Subscribe to Calendar" or "Add Calendar Feed"</li>
+                <li><strong>4.</strong> Paste the URL and save</li>
+              </ol>
+              <button
+                onClick={() => copyToClipboard(calendarFeedUrl, "Calendar feed URL")}
+                className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-blue-900 transition-colors"
+              >
+                Copy Calendar Feed URL
+              </button>
+            </Card>
+
+            {/* RSS Feed */}
+            <Card className="p-8">
+              <h4 className="text-xl font-semibold mb-4 text-foreground flex items-center gap-2">
+                <Globe className="w-5 h-5 text-accent" />
+                Add to Your Website
+              </h4>
+              <p className="text-muted-foreground mb-6">
+                Embed our RSS feed on your website to automatically display the latest events.
+              </p>
+              <div className="bg-muted p-4 rounded-md mb-4 font-mono text-sm break-all">
+                {rssFeedUrl}
+              </div>
+              <ol className="text-sm text-muted-foreground space-y-2 mb-4">
+                <li><strong>1.</strong> Copy the RSS feed URL above</li>
+                <li><strong>2.</strong> Use an RSS widget or plugin on your site</li>
+                <li><strong>3.</strong> Paste the URL to display events automatically</li>
+                <li><strong>4.</strong> Events update in real-time as they are approved</li>
+              </ol>
+              <button
+                onClick={() => copyToClipboard(rssFeedUrl, "RSS feed URL")}
+                className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-blue-900 transition-colors"
+              >
+                Copy RSS Feed URL
+              </button>
+            </Card>
+          </div>
+
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
+            <p className="text-sm text-foreground">
+              <strong>Need help?</strong> Both feeds update automatically with approved events. Location details are masked for private and members-only events.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-16 bg-primary text-primary-foreground">
         <div className="container text-center">
@@ -183,6 +263,7 @@ export default function Home() {
                 <li><button onClick={() => setLocation("/events")} className="hover:opacity-100">Browse Events</button></li>
                 <li><button onClick={() => setLocation("/submit")} className="hover:opacity-100">Submit Event</button></li>
                 <li><a href="/api/rss" className="hover:opacity-100">RSS Feed</a></li>
+                <li><a href="/api/calendar.ics" className="hover:opacity-100">Calendar Feed</a></li>
               </ul>
             </div>
             <div>

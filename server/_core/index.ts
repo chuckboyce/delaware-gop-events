@@ -8,6 +8,7 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { handleRSSFeed } from "./rssEndpoint";
+import { handleCalendarFeed } from "./calendarFeedEndpoint";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -38,6 +39,8 @@ async function startServer() {
   registerOAuthRoutes(app);
   // RSS feed endpoint
   app.get("/api/rss", handleRSSFeed);
+  // Calendar feed endpoint
+  app.get("/api/calendar.ics", handleCalendarFeed);
   // tRPC API
   app.use(
     "/api/trpc",

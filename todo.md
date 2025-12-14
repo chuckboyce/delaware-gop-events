@@ -1,8 +1,8 @@
-# Delaware Conservative Event Database - TODO
+# Delaware Right Now - TODO
 
 ## Phase 1: Database Schema & API Structure
-- [ ] Design database schema with schema.org Event compliance
-- [ ] Create DESIGN.md with complete specifications
+- [x] Design database schema with schema.org Event compliance
+- [x] Create DESIGN.md with complete specifications
 
 ## Phase 2: Database Implementation
 - [x] Update drizzle schema with events table
@@ -21,6 +21,7 @@
 - [x] Implement tRPC procedures for organizer requests (submit, listPending, approve, reject)
 - [x] Build event submission form component with visibility selector and "request login" checkbox
 - [x] Implement form validation with Zod
+- [x] Add organization name field to submission form
 - [ ] Integrate Google Places API for address autocomplete and validation
 - [ ] Create admin dashboard layout
 - [ ] Build pending events list for admin review
@@ -35,34 +36,40 @@
 - [x] Implement date range filtering
 - [x] Implement search functionality
 - [x] Implement event type filtering
+- [x] Add to Calendar feature (Google Calendar, Outlook, iCal)
 - [ ] Add pagination support
 - [ ] Create event detail view page
-- [x] Add to Calendar feature (Google Calendar, Outlook, iCal)
 - [ ] Write vitest tests for public listing procedures
 
 ## Phase 5: RSS Feed Implementation
-- [ ] Create RSS feed generation logic
-- [ ] Implement /api/rss endpoint
-- [ ] Validate RSS 2.0 XML output
+- [x] Create RSS feed generation logic
+- [x] Implement /api/rss endpoint
+- [x] Validate RSS 2.0 XML format
 - [ ] Test RSS feed with feed readers
-- [ ] Add proper XML escaping and encoding
-- [ ] Write vitest tests for RSS generation
+- [ ] Write vitest tests for RSS feed generation
 
-## Phase 6: Testing & Refinement
+## Phase 6: Public Calendar Feed
+- [x] Create iCal feed generation logic for all approved events
+- [x] Implement /api/calendar.ics endpoint for public subscription
+- [x] Add calendar feed subscription link to home page
+- [x] Add RSS feed syndication instructions to home page
+- [ ] Test calendar feed with Google Calendar, Outlook, Apple Calendar
+
+## Phase 7: Testing & Refinement
 - [ ] End-to-end testing of submission workflow
 - [ ] End-to-end testing of approval workflow
 - [ ] End-to-end testing of public listing
 - [ ] End-to-end testing of RSS feed
+- [ ] End-to-end testing of calendar feed
 - [ ] Test representative auto-approval
 - [ ] Test role-based access control
 - [ ] Performance testing with large event datasets
 
-## Phase 7: Deployment & Documentation
+## Phase 8: Deployment & Documentation
 - [ ] Create final checkpoint
 - [ ] Document deployment instructions
 - [ ] Provide user guide for admins and representatives
 - [ ] Test on production environment
-
 
 ## Future Enhancements
 - [ ] Social sharing of events (Facebook, Twitter, LinkedIn, email)
@@ -70,7 +77,7 @@
 - [ ] Authenticated RSS feed for authorized organizations (full details on private/members events)
 - [ ] API key system for organization access to full event data
 - [ ] Social login options (Google, Facebook, Apple)
-- [ ] Event calendar view
+- [ ] Event calendar view (month/week/day)
 - [ ] Recurring event templates
 - [ ] Event attendance tracking
 - [ ] Email reminders for upcoming events
