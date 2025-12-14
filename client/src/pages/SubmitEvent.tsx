@@ -281,6 +281,20 @@ export default function SubmitEvent() {
                 Organizer Information
               </h2>
 
+              {/* Organization Name */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Organization Name *
+                </label>
+                <input
+                  type="text"
+                  {...register("organizationName")}
+                  placeholder="e.g., New Castle County GOP, Delaware Women's Club, Smith for Governor Campaign"
+                  className="w-full px-4 py-3 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-accent"
+                />
+                {errors.organizationName && typeof errors.organizationName === 'object' && 'message' in errors.organizationName && <p className="text-error text-sm mt-1">{String(errors.organizationName.message)}</p>}
+              </div>
+
               {/* Organizer Name */}
               <div className="mb-6">
                 <label className="block text-sm font-medium text-foreground mb-2">
