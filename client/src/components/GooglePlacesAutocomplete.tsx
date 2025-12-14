@@ -29,7 +29,6 @@ export default function GooglePlacesAutocomplete({
   const [apiLoaded, setApiLoaded] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const autocompleteServiceRef = useRef<any>(null);
-  const placesServiceRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const scriptLoadedRef = useRef(false);
   const initAttemptedRef = useRef(false);
@@ -38,7 +37,7 @@ export default function GooglePlacesAutocomplete({
   // Fetch API key from backend
   const { data: configData, isLoading: isLoadingConfig } = trpc.config.googlePlacesApiKey.useQuery();
 
-  // Initialize Google Places API
+  // Initialize Google Places API with async loading
   useEffect(() => {
     if (initAttemptedRef.current || scriptLoadedRef.current) return;
     
@@ -57,28 +56,28 @@ export default function GooglePlacesAutocomplete({
     initAttemptedRef.current = true;
     const w = window as any;
 
-    // Function to initialize services
+    // Function to initialize services with new API
     const initializeServices = () => {
       try {
         if (w.google?.maps?.places) {
-          console.log("Initializing Google Places services with new API");
-          // Use the new API if available
+          console.log("Initializing Google Places with new AutocompleteSuggestion API");
+          
+          // Use the new AutocompleteSuggestion API
           if (w.google.maps.places.AutocompleteService) {
             autocompleteServiceRef.current = new w.google.maps.places.AutocompleteService();
-          }
-          if (w.google.maps.places.PlacesService && containerRef.current) {
-            placesServiceRef.current = new w.google.maps.places.PlacesService(containerRef.current);
+            console.log("AutocompleteService initialized");
           }
           
-          // Create session token for new API
+          // Create session token for billing optimization
           if (w.google.maps.places.AutocompleteSessionToken) {
             sessionTokenRef.current = new w.google.maps.places.AutocompleteSessionToken();
+            console.log("Session token created");
           }
           
           setApiLoaded(true);
           setApiError(null);
           scriptLoadedRef.current = true;
-          console.log("Google Places services initialized successfully");
+          console.log("Google Places initialized successfully");
           return true;
         }
         return false;
@@ -97,13 +96,14 @@ export default function GooglePlacesAutocomplete({
       return;
     }
 
-    // Load Google Maps script with new API
+    // Load Google Maps script with async loading parameter
     const script = document.createElement("script");
     script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&loading=async`;
     script.async = true;
+    script.defer = true;
     
     script.onload = () => {
-      console.log("Google Maps script loaded");
+      console.log("Google Maps script loaded asynchronously");
       // Wait a bit for the API to be ready
       setTimeout(() => {
         if (!initializeServices()) {
@@ -125,8 +125,8 @@ export default function GooglePlacesAutocomplete({
     };
   }, [configData, isLoadingConfig]);
 
-  // Handle input change
-  const handleInputChange = (inputValue: string) => {
+  // Handle input change - use new AutocompleteSuggestion API
+  const handleInputChange = async (inputValue: string) => {
     onChange(inputValue);
 
     if (!inputValue.trim()) {
@@ -143,88 +143,86 @@ export default function GooglePlacesAutocomplete({
     setIsLoading(true);
 
     try {
-      // Use the callback-based API (works with both old and new versions)
-      autocompleteServiceRef.current.getPlacePredictions(
-        {
-          input: inputValue,
-          componentRestrictions: { country: "us" },
-          sessionToken: sessionTokenRef.current,
-        },
-        (predictions: any[] | null, status: string) => {
-          console.log(`Autocomplete status: ${status}, predictions: ${predictions?.length || 0}`);
-          if (predictions && status === "OK") {
-            // Map predictions to our interface
-            const mappedPredictions = predictions.map((p: any) => ({
-              placeId: p.place_id,
-              mainText: p.main_text || p.description,
-              secondaryText: p.secondary_text,
-            }));
-            setPredictions(mappedPredictions.slice(0, 8));
-            setIsOpen(true);
-          } else if (status === "ZERO_RESULTS") {
-            setPredictions([]);
-            setIsOpen(false);
-          } else if (status !== "OK") {
-            console.warn(`Autocomplete status: ${status}`);
-          }
-          setIsLoading(false);
-        }
-      );
+      // Use the new AutocompleteSuggestion API with promise-based approach
+      const request = {
+        input: inputValue,
+        componentRestrictions: { country: "us" },
+        sessionToken: sessionTokenRef.current,
+      };
+
+      // The new API returns a promise
+      const service = autocompleteServiceRef.current;
+      const response = await service.getPlacePredictions(request);
+      
+      console.log(`Autocomplete returned ${response.predictions?.length || 0} predictions`);
+      
+      if (response.predictions && response.predictions.length > 0) {
+        // Map predictions to our interface
+        const mappedPredictions = response.predictions.map((p: any) => ({
+          placeId: p.place_id,
+          mainText: p.main_text || p.description,
+          secondaryText: p.secondary_text,
+        }));
+        setPredictions(mappedPredictions.slice(0, 8));
+        setIsOpen(true);
+      } else {
+        setPredictions([]);
+        setIsOpen(false);
+      }
+      setIsLoading(false);
     } catch (error) {
       console.error("Autocomplete error:", error);
       setIsLoading(false);
     }
   };
 
-  // Handle prediction selection
-  const handleSelectPrediction = (prediction: PlacePrediction) => {
+  // Handle prediction selection - use new Place API
+  const handleSelectPrediction = async (prediction: PlacePrediction) => {
     onChange(prediction.mainText);
     setPredictions([]);
     setIsOpen(false);
 
-    // Fetch place details for coordinates and full address
-    if (placesServiceRef.current && apiLoaded) {
+    // Fetch place details using new Place API
+    const w = window as any;
+    if (w.google?.maps?.places?.Place && apiLoaded) {
       try {
-        placesServiceRef.current.getDetails(
-          {
-            placeId: prediction.placeId,
-            fields: ["formatted_address", "geometry", "address_components"],
-            sessionToken: sessionTokenRef.current,
-          },
-          (place: any | null, status: string) => {
-            if (status === "OK" && place?.geometry?.location) {
-              const lat = typeof place.geometry.location.lat === 'function' 
-                ? place.geometry.location.lat() 
-                : place.geometry.location.lat;
-              const lng = typeof place.geometry.location.lng === 'function' 
-                ? place.geometry.location.lng() 
-                : place.geometry.location.lng;
-              const address = place.formatted_address || prediction.mainText;
-              
-              console.log(`Selected: ${address}, Lat: ${lat}, Lng: ${lng}`);
-              
-              onChange(prediction.mainText, {
-                lat,
-                lng,
-                address,
-              });
+        // Use the new Place API
+        const place = new w.google.maps.places.Place({
+          id: prediction.placeId,
+        });
 
-              if (onAddressSelect) {
-                onAddressSelect(address, lat, lng);
-              }
+        const request = {
+          fields: ["geometry", "formatted_address", "address_components"],
+          sessionToken: sessionTokenRef.current,
+        };
 
-              // Create a new session token for the next request
-              const w = window as any;
-              if (w.google?.maps?.places?.AutocompleteSessionToken) {
-                sessionTokenRef.current = new w.google.maps.places.AutocompleteSessionToken();
-              }
-            } else {
-              console.warn(`Place details status: ${status}`);
-            }
+        await place.fetchFields(request);
+
+        if (place.geometry?.location) {
+          const lat = place.geometry.location.lat();
+          const lng = place.geometry.location.lng();
+          const address = place.formatted_address || prediction.mainText;
+          
+          console.log(`Selected: ${address}, Lat: ${lat}, Lng: ${lng}`);
+          
+          onChange(prediction.mainText, {
+            lat,
+            lng,
+            address,
+          });
+
+          if (onAddressSelect) {
+            onAddressSelect(address, lat, lng);
           }
-        );
+
+          // Create a new session token for the next request
+          if (w.google?.maps?.places?.AutocompleteSessionToken) {
+            sessionTokenRef.current = new w.google.maps.places.AutocompleteSessionToken();
+          }
+        }
       } catch (error) {
         console.error("Place details error:", error);
+        // Still use the prediction main text even if we can't get details
       }
     }
   };
