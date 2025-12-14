@@ -5,6 +5,7 @@ import { Calendar, MapPin, Users, Lock, Globe } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
 import { format } from "date-fns";
+import AddToCalendar from "@/components/AddToCalendar";
 
 export default function Events() {
   const [, setLocation] = useLocation();
@@ -255,8 +256,19 @@ export default function Events() {
                     </div>
                   </div>
 
-                  {/* Action Button */}
+                  {/* Action Buttons */}
                   <div className="flex flex-col gap-2 md:w-48">
+                    <AddToCalendar
+                      event={{
+                        title: event.name,
+                        description: event.description,
+                        startDate: new Date(event.startDate),
+                        endDate: event.endDate ? new Date(event.endDate) : undefined,
+                        location: shouldMaskLocation(event.visibility) ? "Location details available upon request" : event.location,
+                        url: event.eventUrl || undefined,
+                      }}
+                      className="w-full"
+                    />
                     {event.eventUrl && (
                       <a
                         href={event.eventUrl}

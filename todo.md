@@ -37,7 +37,7 @@
 - [x] Implement event type filtering
 - [ ] Add pagination support
 - [ ] Create event detail view page
-- [ ] Add to Calendar feature (Google Calendar, Outlook, iCal)
+- [x] Add to Calendar feature (Google Calendar, Outlook, iCal)
 - [ ] Write vitest tests for public listing procedures
 
 ## Phase 5: RSS Feed Implementation
