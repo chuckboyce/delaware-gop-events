@@ -19,8 +19,8 @@
 - [x] Add organizerRequests table for tracking login requests
 - [x] Add query helpers for organizer operations in server/db.ts
 - [x] Implement tRPC procedures for organizer requests (submit, listPending, approve, reject)
-- [ ] Build event submission form component with visibility selector and "request login" checkbox
-- [ ] Implement form validation with Zod
+- [x] Build event submission form component with visibility selector and "request login" checkbox
+- [x] Implement form validation with Zod
 - [ ] Integrate Google Places API for address autocomplete and validation
 - [ ] Create admin dashboard layout
 - [ ] Build pending events list for admin review
