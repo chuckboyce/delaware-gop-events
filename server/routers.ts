@@ -28,6 +28,10 @@ const eventInputSchema = z.object({
   description: z.string().min(1, "Description is required"),
   startDate: z.date(),
   endDate: z.date().optional(),
+  startTime: z.string().optional(),
+  isAllDay: z.number().optional().default(0),
+  durationValue: z.number().optional(),
+  durationUnit: z.enum(["minutes", "hours", "days"]).optional(),
   location: z.string().min(1, "Location is required").max(255),
   locationAddress: z.string().optional(),
   locationLatitude: z.string().optional(),
@@ -81,6 +85,33 @@ const adminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
   }
   return next({ ctx });
 });
+
+
+// Helper function to calculate endDate from startDate, startTime, and duration
+function calculateEndDate(startDate: Date, startTime?: string, durationValue?: number, durationUnit?: string): Date {
+  const endDate = new Date(startDate);
+  
+  if (startTime) {
+    const [hours, minutes] = startTime.split(':').map(Number);
+    endDate.setHours(hours, minutes, 0, 0);
+  }
+  
+  if (durationValue && durationUnit) {
+    switch (durationUnit) {
+      case 'minutes':
+        endDate.setMinutes(endDate.getMinutes() + durationValue);
+        break;
+      case 'hours':
+        endDate.setHours(endDate.getHours() + durationValue);
+        break;
+      case 'days':
+        endDate.setDate(endDate.getDate() + durationValue);
+        break;
+    }
+  }
+  
+  return endDate;
+}
 
 export const appRouter = router({
   system: systemRouter,
@@ -137,8 +168,14 @@ export const appRouter = router({
         const userId = ctx.user?.id;
         const isRepresentative = ctx.user?.role === "representative" || ctx.user?.role === "admin";
 
+        // Calculate endDate from startTime and duration if provided
+        const endDate = input.durationValue && input.durationUnit 
+          ? calculateEndDate(input.startDate, input.startTime, input.durationValue, input.durationUnit)
+          : input.endDate;
+
         const event = await createEvent({
           ...input,
+          endDate,
           submittedBy: userId,
           status: isRepresentative ? "approved" : "pending",
           submittedAt: new Date(),
@@ -347,6 +384,16 @@ export const appRouter = router({
       const baseUrl = process.env.VITE_APP_ID ? `https://${process.env.VITE_APP_ID}.manus.space` : "http://localhost:3000";
       const feed = await generateRSSFeed(baseUrl);
       return feed;
+    }),
+  }),
+
+  config: router({
+    googlePlacesApiKey: publicProcedure.query(() => {
+      const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+      if (!apiKey) {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Google Places API key not configured" });
+      }
+      return { apiKey };
     }),
   }),
 });

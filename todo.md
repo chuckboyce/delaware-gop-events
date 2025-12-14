@@ -93,3 +93,11 @@
 - [ ] Event attendance tracking
 - [ ] Email reminders for upcoming events
 - [ ] Event analytics and reporting
+- [x] Simplify date/time fields: remove end date, use time + duration
+- [x] Add "All Day" checkbox for events
+- [x] Add duration fields (number + unit: minutes/hours/days)
+- [x] Calculate dates from time and duration on backend
+- [x] Update database schema to store duration info
+- [x] Write tests for date calculation logic (27 tests passing)
+- [ ] For recurring meetings, calculate dates starting from current month
+- [ ] For one-time meetings, use current date with provided time

@@ -41,6 +41,12 @@ export const events = mysqlTable("events", {
   startDate: timestamp("startDate").notNull(),
   endDate: timestamp("endDate"),
   
+  // Duration fields (for simplified time entry)
+  startTime: varchar("startTime", { length: 5 }), // HH:MM format
+  isAllDay: tinyint("isAllDay").default(0).notNull(),
+  durationValue: int("durationValue"), // numeric value for duration
+  durationUnit: mysqlEnum("durationUnit", ["minutes", "hours", "days"]), // unit of duration
+  
   // Location (schema.org: location)
   location: varchar("location", { length: 255 }).notNull(),
   locationAddress: text("locationAddress"),

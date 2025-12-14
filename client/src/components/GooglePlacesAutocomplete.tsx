@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
+import { trpc } from "@/lib/trpc";
 
 interface GooglePlacesAutocompleteProps {
   value: string;
@@ -43,14 +44,20 @@ export default function GooglePlacesAutocomplete({
   const containerRef = useRef<HTMLDivElement>(null);
   const scriptLoadedRef = useRef(false);
 
+  // Fetch API key from backend
+  const { data: configData, isLoading: isLoadingConfig } = trpc.config.googlePlacesApiKey.useQuery();
+
   // Initialize Google Places API
   useEffect(() => {
     if (scriptLoadedRef.current) return;
     
-    const apiKey = import.meta.env.VITE_GOOGLE_PLACES_API_KEY;
+    const apiKey = configData?.apiKey;
 
     if (!apiKey) {
-      console.error("Google Places API key not found in VITE_GOOGLE_PLACES_API_KEY");
+      if (isLoadingConfig) {
+        return; // Still loading
+      }
+      console.error("Google Places API key not available");
       setApiError("Google Places API key not configured");
       return;
     }
@@ -102,7 +109,7 @@ export default function GooglePlacesAutocomplete({
     return () => {
       // Don't remove script as it might be used elsewhere
     };
-  }, []);
+  }, [configData, isLoadingConfig]);
 
   // Handle input change
   const handleInputChange = (inputValue: string) => {
@@ -192,10 +199,10 @@ export default function GooglePlacesAutocomplete({
         onFocus={() => value && predictions.length > 0 && setIsOpen(true)}
         onBlur={() => setTimeout(() => setIsOpen(false), 200)}
         autoComplete="off"
-        disabled={!apiLoaded}
+        disabled={!apiLoaded || isLoadingConfig}
       />
 
-      {!apiLoaded && (
+      {(!apiLoaded || isLoadingConfig) && (
         <div className="absolute right-3 top-3 text-muted-foreground text-xs">
           {apiError ? "⚠️" : "Loading..."}
         </div>

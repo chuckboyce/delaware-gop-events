@@ -20,6 +20,10 @@ const eventSubmissionSchema = z.object({
   recurringMonths: z.string().optional(),
   startDate: z.date(),
   endDate: z.date().optional(),
+  startTime: z.string().optional(),
+  isAllDay: z.boolean().optional().default(false),
+  durationValue: z.number().optional(),
+  durationUnit: z.enum(["minutes", "hours", "days"]).optional(),
   location: z.string().min(1, "Location is required").max(255),
   locationAddress: z.string().optional(),
   locationLatitude: z.string().optional(),
@@ -74,6 +78,10 @@ export default function SubmitEvent() {
         description: data.description,
         startDate: data.startDate,
         endDate: data.endDate,
+        startTime: data.startTime,
+        isAllDay: data.isAllDay ? 1 : 0,
+        durationValue: data.durationValue,
+        durationUnit: data.durationUnit,
         location: data.location,
         locationAddress: data.locationAddress,
         locationLatitude: data.locationLatitude,
@@ -340,29 +348,80 @@ export default function SubmitEvent() {
               )}
 
               {/* Date and Time */}
-              <div className="grid md:grid-cols-2 gap-6 mb-6">
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Start Date & Time *
-                  </label>
-                  <input
-                    type="datetime-local"
-                    {...register("startDate", { valueAsDate: true })}
-                    className="w-full px-4 py-3 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-accent"
-                  />
-                  {errors.startDate && typeof errors.startDate === 'object' && 'message' in errors.startDate && <p className="text-error text-sm mt-1">{String(errors.startDate.message)}</p>}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Start Date *
+                </label>
+                <input
+                  type="date"
+                  {...register("startDate", { valueAsDate: true })}
+                  className="w-full px-4 py-3 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-accent"
+                />
+                {errors.startDate && typeof errors.startDate === 'object' && 'message' in errors.startDate && <p className="text-error text-sm mt-1">{String(errors.startDate.message)}</p>}
+              </div>
+
+              {/* Start Time */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Start Time
+                </label>
+                <div className="grid grid-cols-2 gap-4">
+                  <select
+                    {...register("startTime")}
+                    className="px-4 py-3 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-accent"
+                  >
+                    <option value="">Select time</option>
+                    {Array.from({ length: 24 }, (_, h) => 
+                      Array.from({ length: 4 }, (_, m) => {
+                        const hour = String(h).padStart(2, '0');
+                        const minute = String(m * 15).padStart(2, '0');
+                        const time = `${hour}:${minute}`;
+                        return <option key={time} value={time}>{time}</option>;
+                      })
+                    )}
+                  </select>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    End Date & Time
-                  </label>
+                {errors.startTime && typeof errors.startTime === 'object' && 'message' in errors.startTime && <p className="text-error text-sm mt-1">{String(errors.startTime.message)}</p>}
+              </div>
+
+              {/* All Day Checkbox */}
+              <div className="mb-6">
+                <label className="flex items-center gap-2 cursor-pointer">
                   <input
-                    type="datetime-local"
-                    {...register("endDate", { valueAsDate: true })}
-                    className="w-full px-4 py-3 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-accent"
+                    type="checkbox"
+                    {...register("isAllDay")}
+                    className="w-4 h-4"
                   />
-                  {errors.endDate && typeof errors.endDate === 'object' && 'message' in errors.endDate && <p className="text-error text-sm mt-1">{String(errors.endDate.message)}</p>}
+                  <span className="text-sm font-medium text-foreground">
+                    All day event
+                  </span>
+                </label>
+              </div>
+
+              {/* Duration */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Duration
+                </label>
+                <div className="grid grid-cols-3 gap-4">
+                  <input
+                    type="number"
+                    {...register("durationValue", { valueAsNumber: true })}
+                    placeholder="e.g., 2"
+                    min="1"
+                    className="px-4 py-3 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-accent"
+                  />
+                  <select
+                    {...register("durationUnit")}
+                    className="px-4 py-3 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-accent col-span-2"
+                  >
+                    <option value="">Select unit</option>
+                    <option value="minutes">Minutes</option>
+                    <option value="hours">Hours</option>
+                    <option value="days">Days</option>
+                  </select>
                 </div>
+                {errors.durationValue && typeof errors.durationValue === 'object' && 'message' in errors.durationValue && <p className="text-error text-sm mt-1">{String(errors.durationValue.message)}</p>}
               </div>
 
               {/* Visibility */}
