@@ -31,8 +31,8 @@
 - [x] Add success confirmation message after event submission
 - [x] Make logo clickable to return home
 - [x] Add login/signup buttons to navigation
-- [ ] Fix Google Places autocomplete not loading (debug API key)
-- [ ] Add fallback full address field with street autocomplete
+- [x] Fix Google Places autocomplete: rewritten with proper error handling and callback-based API
+- [x] Fix async loading of Google Maps script for better performance
 - [x] Remove latitude/longitude display fields from form (save silently to database)
 - [x] Add organizer/organization filtering to events listing
 - [x] Add recurring monthly meeting support (nth day-of-week + month selection)
@@ -105,3 +105,4 @@
 - [x] Capture user's timezone on frontend
 - [x] Update calculateEndDate to work with UTC
 - [x] Write tests for UTC timezone conversion (19 tests passing)
+

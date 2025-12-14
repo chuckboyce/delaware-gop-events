@@ -17,16 +17,6 @@ interface PlacePrediction {
   secondary_text?: string;
 }
 
-interface PlaceDetails {
-  formatted_address?: string;
-  geometry?: {
-    location: {
-      lat: () => number;
-      lng: () => number;
-    };
-  };
-}
-
 export default function GooglePlacesAutocomplete({
   value,
   onChange,
@@ -43,13 +33,14 @@ export default function GooglePlacesAutocomplete({
   const placesServiceRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const scriptLoadedRef = useRef(false);
+  const initAttemptedRef = useRef(false);
 
   // Fetch API key from backend
   const { data: configData, isLoading: isLoadingConfig } = trpc.config.googlePlacesApiKey.useQuery();
 
   // Initialize Google Places API
   useEffect(() => {
-    if (scriptLoadedRef.current) return;
+    if (initAttemptedRef.current || scriptLoadedRef.current) return;
     
     const apiKey = configData?.apiKey;
 
@@ -59,20 +50,41 @@ export default function GooglePlacesAutocomplete({
       }
       console.error("Google Places API key not available");
       setApiError("Google Places API key not configured");
+      initAttemptedRef.current = true;
       return;
     }
 
+    initAttemptedRef.current = true;
     const w = window as any;
+
+    // Function to initialize services
+    const initializeServices = () => {
+      try {
+        if (w.google?.maps?.places) {
+          console.log("Initializing Google Places services");
+          autocompleteServiceRef.current = new w.google.maps.places.AutocompleteService();
+          if (containerRef.current) {
+            placesServiceRef.current = new w.google.maps.places.PlacesService(containerRef.current);
+          }
+          setApiLoaded(true);
+          setApiError(null);
+          scriptLoadedRef.current = true;
+          console.log("Google Places services initialized successfully");
+          return true;
+        }
+        return false;
+      } catch (error) {
+        console.error("Error initializing Google Places services:", error);
+        setApiError("Failed to initialize Google Places");
+        scriptLoadedRef.current = true;
+        return false;
+      }
+    };
 
     // Check if Google Maps is already loaded
     if (w.google?.maps?.places) {
-      console.log("Google Maps already loaded");
-      autocompleteServiceRef.current = new w.google.maps.places.AutocompleteService();
-      if (containerRef.current) {
-        placesServiceRef.current = new w.google.maps.places.PlacesService(containerRef.current);
-      }
-      setApiLoaded(true);
-      scriptLoadedRef.current = true;
+      console.log("Google Maps already loaded, initializing services");
+      initializeServices();
       return;
     }
 
@@ -84,18 +96,12 @@ export default function GooglePlacesAutocomplete({
     
     script.onload = () => {
       console.log("Google Maps script loaded");
-      if (w.google?.maps?.places) {
-        autocompleteServiceRef.current = new w.google.maps.places.AutocompleteService();
-        if (containerRef.current) {
-          placesServiceRef.current = new w.google.maps.places.PlacesService(containerRef.current);
+      // Wait a bit for the API to be ready
+      setTimeout(() => {
+        if (!initializeServices()) {
+          setApiError("Google Places API failed to load");
         }
-        setApiLoaded(true);
-        setApiError(null);
-      } else {
-        console.error("Google Maps Places API not available after script load");
-        setApiError("Google Places API failed to load");
-      }
-      scriptLoadedRef.current = true;
+      }, 100);
     };
 
     script.onerror = () => {
@@ -121,8 +127,8 @@ export default function GooglePlacesAutocomplete({
       return;
     }
 
-    if (!autocompleteServiceRef.current) {
-      console.warn("AutocompleteService not initialized");
+    if (!autocompleteServiceRef.current || !apiLoaded) {
+      console.warn("AutocompleteService not initialized or API not loaded");
       return;
     }
 
@@ -142,6 +148,8 @@ export default function GooglePlacesAutocomplete({
           } else if (status === "ZERO_RESULTS") {
             setPredictions([]);
             setIsOpen(false);
+          } else if (status !== "OK") {
+            console.warn(`Autocomplete status: ${status}`);
           }
           setIsLoading(false);
         }
@@ -159,32 +167,42 @@ export default function GooglePlacesAutocomplete({
     setIsOpen(false);
 
     // Fetch place details for coordinates and full address
-    if (placesServiceRef.current) {
-      placesServiceRef.current.getDetails(
-        {
-          placeId: prediction.place_id,
-          fields: ["formatted_address", "geometry", "address_components"],
-        },
-        (place: PlaceDetails | null, status: string) => {
-          if (status === "OK" && place?.geometry?.location) {
-            const lat = place.geometry.location.lat();
-            const lng = place.geometry.location.lng();
-            const address = place.formatted_address || prediction.description;
-            
-            console.log(`Selected: ${address}, Lat: ${lat}, Lng: ${lng}`);
-            
-            onChange(prediction.description, {
-              lat,
-              lng,
-              address,
-            });
+    if (placesServiceRef.current && apiLoaded) {
+      try {
+        placesServiceRef.current.getDetails(
+          {
+            placeId: prediction.place_id,
+            fields: ["formatted_address", "geometry", "address_components"],
+          },
+          (place: any | null, status: string) => {
+            if (status === "OK" && place?.geometry?.location) {
+              const lat = typeof place.geometry.location.lat === 'function' 
+                ? place.geometry.location.lat() 
+                : place.geometry.location.lat;
+              const lng = typeof place.geometry.location.lng === 'function' 
+                ? place.geometry.location.lng() 
+                : place.geometry.location.lng;
+              const address = place.formatted_address || prediction.description;
+              
+              console.log(`Selected: ${address}, Lat: ${lat}, Lng: ${lng}`);
+              
+              onChange(prediction.description, {
+                lat,
+                lng,
+                address,
+              });
 
-            if (onAddressSelect) {
-              onAddressSelect(address, lat, lng);
+              if (onAddressSelect) {
+                onAddressSelect(address, lat, lng);
+              }
+            } else {
+              console.warn(`Place details status: ${status}`);
             }
           }
-        }
-      );
+        );
+      } catch (error) {
+        console.error("Place details error:", error);
+      }
     }
   };
 
