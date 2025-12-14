@@ -466,8 +466,19 @@ export default function SubmitEvent() {
                 {errors.location && typeof errors.location === 'object' && 'message' in errors.location && <p className="text-error text-sm mt-1">{String(errors.location.message)}</p>}
               </div>
 
-              {/* Address field - temporarily hidden while debugging */}
-              {/* TODO: Re-enable Full Address field with Google Places autocomplete */}
+              {/* Full Address */}
+              <div className="mb-6">
+                <label htmlFor="locationAddress" className="block text-sm font-medium text-foreground mb-2">
+                  Full Address
+                </label>
+                <input
+                  id="locationAddress"
+                  type="text"
+                  {...register("locationAddress")}
+                  placeholder="Street address, city, state, zip"
+                  className="w-full px-4 py-3 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-accent bg-background text-foreground"
+                />
+              </div>
             </div>
 
             {/* Organizer Information Section */}

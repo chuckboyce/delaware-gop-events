@@ -108,5 +108,5 @@
 
 - [x] Debug Google Places autocomplete: API key endpoint working correctly
 - [x] Verify Google Places API key is being passed correctly to frontend
-- [ ] Fix Full Address field rendering issue (field not visible on form despite code being present)
+- [ ] Debug Full Address field rendering issue (code present but field not visible despite multiple attempts)
 - [ ] Re-enable Google Places autocomplete once rendering issue is resolved
