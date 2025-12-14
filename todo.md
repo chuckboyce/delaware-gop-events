@@ -72,6 +72,7 @@
 - [ ] Test on production environment
 
 ## Future Enhancements
+- [ ] Set up social media accounts (Facebook, Twitter/X, Instagram, TikTok, LinkedIn, YouTube)
 - [ ] Social sharing of events (Facebook, Twitter, LinkedIn, email)
 - [ ] User event notifications (subscribe to categories, organizations, date ranges)
 - [ ] Authenticated RSS feed for authorized organizations (full details on private/members events)
