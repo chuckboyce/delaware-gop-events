@@ -3,12 +3,11 @@ import { Input } from "@/components/ui/input";
 
 interface GooglePlacesAutocompleteProps {
   value: string;
-  onChange: (value: string) => void;
+  onChange: (value: string, details?: { lat?: number; lng?: number; address?: string }) => void;
   placeholder?: string;
   className?: string;
+  onAddressSelect?: (address: string, lat: number, lng: number) => void;
 }
-
-// Type for Google Maps window object
 
 interface PlacePrediction {
   place_id: string;
@@ -32,46 +31,77 @@ export default function GooglePlacesAutocomplete({
   onChange,
   placeholder = "Enter event location",
   className = "",
+  onAddressSelect,
 }: GooglePlacesAutocompleteProps) {
   const [predictions, setPredictions] = useState<PlacePrediction[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [apiLoaded, setApiLoaded] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
   const autocompleteServiceRef = useRef<any>(null);
   const placesServiceRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const scriptLoadedRef = useRef(false);
 
   // Initialize Google Places API
   useEffect(() => {
-    const apiKey = import.meta.env.VITE_FRONTEND_FORGE_API_KEY || import.meta.env.VITE_GOOGLE_PLACES_API_KEY;
+    if (scriptLoadedRef.current) return;
+    
+    const apiKey = import.meta.env.VITE_GOOGLE_PLACES_API_KEY;
 
     if (!apiKey) {
-      console.warn("Google Places API key not configured");
+      console.error("Google Places API key not found in VITE_GOOGLE_PLACES_API_KEY");
+      setApiError("Google Places API key not configured");
       return;
     }
 
     const w = window as any;
 
-    // Load Google Maps script if not already loaded
-    if (!w.google) {
-      const script = document.createElement("script");
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
-      script.async = true;
-      script.defer = true;
-      script.onload = () => {
-        if (window.google?.maps?.places) {
-          autocompleteServiceRef.current = new window.google.maps.places.AutocompleteService();
-          if (containerRef.current) {
-            placesServiceRef.current = new window.google.maps.places.PlacesService(containerRef.current);
-          }
-        }
-      };
-      document.head.appendChild(script);
-    } else if ((window as any).google?.maps?.places) {
-      autocompleteServiceRef.current = new (window as any).google.maps.places.AutocompleteService();
+    // Check if Google Maps is already loaded
+    if (w.google?.maps?.places) {
+      console.log("Google Maps already loaded");
+      autocompleteServiceRef.current = new w.google.maps.places.AutocompleteService();
       if (containerRef.current) {
-        placesServiceRef.current = new (window as any).google.maps.places.PlacesService(containerRef.current);
+        placesServiceRef.current = new w.google.maps.places.PlacesService(containerRef.current);
       }
+      setApiLoaded(true);
+      scriptLoadedRef.current = true;
+      return;
     }
+
+    // Load Google Maps script
+    const script = document.createElement("script");
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+    script.async = true;
+    script.defer = true;
+    
+    script.onload = () => {
+      console.log("Google Maps script loaded");
+      if (w.google?.maps?.places) {
+        autocompleteServiceRef.current = new w.google.maps.places.AutocompleteService();
+        if (containerRef.current) {
+          placesServiceRef.current = new w.google.maps.places.PlacesService(containerRef.current);
+        }
+        setApiLoaded(true);
+        setApiError(null);
+      } else {
+        console.error("Google Maps Places API not available after script load");
+        setApiError("Google Places API failed to load");
+      }
+      scriptLoadedRef.current = true;
+    };
+
+    script.onerror = () => {
+      console.error("Failed to load Google Maps script");
+      setApiError("Failed to load Google Places API");
+      scriptLoadedRef.current = true;
+    };
+
+    document.head.appendChild(script);
+
+    return () => {
+      // Don't remove script as it might be used elsewhere
+    };
   }, []);
 
   // Handle input change
@@ -85,26 +115,34 @@ export default function GooglePlacesAutocomplete({
     }
 
     if (!autocompleteServiceRef.current) {
+      console.warn("AutocompleteService not initialized");
       return;
     }
 
     setIsLoading(true);
 
-    autocompleteServiceRef.current.getPlacePredictions(
-      {
-        input: inputValue,
-        componentRestrictions: { country: "us" }, // Restrict to US
-      },
-      (predictions: PlacePrediction[] | null) => {
-        if (predictions) {
-          setPredictions(predictions.slice(0, 5)); // Limit to 5 suggestions
-          setIsOpen(true);
-        } else {
-          setPredictions([]);
+    try {
+      autocompleteServiceRef.current.getPlacePredictions(
+        {
+          input: inputValue,
+          componentRestrictions: { country: "us" },
+        },
+        (predictions: PlacePrediction[] | null, status: string) => {
+          console.log(`Autocomplete status: ${status}, predictions: ${predictions?.length || 0}`);
+          if (predictions && status === "OK") {
+            setPredictions(predictions.slice(0, 8));
+            setIsOpen(true);
+          } else if (status === "ZERO_RESULTS") {
+            setPredictions([]);
+            setIsOpen(false);
+          }
+          setIsLoading(false);
         }
-        setIsLoading(false);
-      }
-    );
+      );
+    } catch (error) {
+      console.error("Autocomplete error:", error);
+      setIsLoading(false);
+    }
   };
 
   // Handle prediction selection
@@ -113,19 +151,30 @@ export default function GooglePlacesAutocomplete({
     setPredictions([]);
     setIsOpen(false);
 
-    // Optionally fetch place details for coordinates
+    // Fetch place details for coordinates and full address
     if (placesServiceRef.current) {
       placesServiceRef.current.getDetails(
         {
           placeId: prediction.place_id,
-          fields: ["formatted_address", "geometry"],
+          fields: ["formatted_address", "geometry", "address_components"],
         },
-        (place: PlaceDetails | null) => {
-          if (place?.geometry?.location) {
+        (place: PlaceDetails | null, status: string) => {
+          if (status === "OK" && place?.geometry?.location) {
             const lat = place.geometry.location.lat();
             const lng = place.geometry.location.lng();
-            // You can store these coordinates if needed
-            console.log(`Location: ${lat}, ${lng}`);
+            const address = place.formatted_address || prediction.description;
+            
+            console.log(`Selected: ${address}, Lat: ${lat}, Lng: ${lng}`);
+            
+            onChange(prediction.description, {
+              lat,
+              lng,
+              address,
+            });
+
+            if (onAddressSelect) {
+              onAddressSelect(address, lat, lng);
+            }
           }
         }
       );
@@ -143,7 +192,14 @@ export default function GooglePlacesAutocomplete({
         onFocus={() => value && predictions.length > 0 && setIsOpen(true)}
         onBlur={() => setTimeout(() => setIsOpen(false), 200)}
         autoComplete="off"
+        disabled={!apiLoaded}
       />
+
+      {!apiLoaded && (
+        <div className="absolute right-3 top-3 text-muted-foreground text-xs">
+          {apiError ? "⚠️" : "Loading..."}
+        </div>
+      )}
 
       {isLoading && (
         <div className="absolute right-3 top-3 text-muted-foreground text-sm">
@@ -159,12 +215,18 @@ export default function GooglePlacesAutocomplete({
               onClick={() => handleSelectPrediction(prediction)}
               className="w-full text-left px-4 py-3 hover:bg-muted transition-colors border-b border-border last:border-b-0"
             >
-              <div className="font-medium text-foreground">{prediction.main_text}</div>
+              <div className="font-medium text-foreground text-sm">{prediction.main_text}</div>
               {prediction.secondary_text && (
-                <div className="text-sm text-muted-foreground">{prediction.secondary_text}</div>
+                <div className="text-xs text-muted-foreground">{prediction.secondary_text}</div>
               )}
             </button>
           ))}
+        </div>
+      )}
+
+      {apiError && (
+        <div className="text-xs text-red-500 mt-1">
+          {apiError}
         </div>
       )}
     </div>

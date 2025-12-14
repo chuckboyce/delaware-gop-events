@@ -31,6 +31,9 @@
 - [x] Add success confirmation message after event submission
 - [x] Make logo clickable to return home
 - [x] Add login/signup buttons to navigation
+- [ ] Fix Google Places autocomplete not loading (debug API key)
+- [ ] Add fallback full address field with street autocomplete
+- [x] Remove latitude/longitude display fields from form (save silently to database)
 - [ ] Write vitest tests for admin procedures
 
 ## Phase 4: Public Event Listing

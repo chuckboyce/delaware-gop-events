@@ -254,7 +254,13 @@ export default function SubmitEvent() {
                 </label>
                 <GooglePlacesAutocomplete
                   value={watch("locationAddress") || ""}
-                  onChange={(value) => setValue("locationAddress", value)}
+                  onChange={(value, details) => {
+                    setValue("locationAddress", value);
+                    if (details?.lat && details?.lng) {
+                      setValue("locationLatitude", String(details.lat));
+                      setValue("locationLongitude", String(details.lng));
+                    }
+                  }}
                   placeholder="Street address, city, state, zip"
                   className="w-full px-4 py-3 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-accent"
                 />
@@ -263,31 +269,9 @@ export default function SubmitEvent() {
                 </p>
               </div>
 
-              {/* Coordinates (optional) */}
-              <div className="grid md:grid-cols-2 gap-6 mb-6">
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Latitude
-                  </label>
-                  <input
-                    type="text"
-                    {...register("locationLatitude")}
-                    placeholder="e.g., 39.1582"
-                    className="w-full px-4 py-3 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-accent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Longitude
-                  </label>
-                  <input
-                    type="text"
-                    {...register("locationLongitude")}
-                    placeholder="e.g., -75.5244"
-                    className="w-full px-4 py-3 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-accent"
-                  />
-                </div>
-              </div>
+              {/* Hidden coordinates - captured automatically from Google Places */}
+              <input type="hidden" {...register("locationLatitude")} />
+              <input type="hidden" {...register("locationLongitude")} />
             </div>
 
             {/* Organizer Section */}
