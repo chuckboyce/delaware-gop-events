@@ -21,14 +21,13 @@
 - [x] Implement tRPC procedures for organizer requests (submit, listPending, approve, reject)
 - [x] Build event submission form component with visibility selector and "request login" checkbox
 - [x] Implement form validation with Zod
-- [x] Add organization name field to submission form
-- [ ] Integrate Google Places API for address autocomplete and validation
-- [ ] Create admin dashboard layout
-- [ ] Build pending events list for admin review
-- [ ] Build pending organizer requests list for admin review
-- [ ] Implement approve/reject functionality for events
-- [ ] Implement approve/reject functionality for organizer requests
-- [ ] Implement event editing (users edit own, admins override any)
+- [x] Integrate Google Places API for address autocomplete and validation
+- [x] Create admin dashboard layout
+- [x] Build pending events list for admin review
+- [x] Build pending organizer requests list for admin review
+- [x] Implement approve/reject functionality for events
+- [x] Implement approve/reject functionality for organizer requests
+- [x] Implement event editing (users edit own, admins override any)
 - [ ] Write vitest tests for admin procedures
 
 ## Phase 4: Public Event Listing

@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
+import GooglePlacesAutocomplete from "@/components/GooglePlacesAutocomplete";
 
 const eventSubmissionSchema = z.object({
   name: z.string().min(1, "Event title is required").max(255),
@@ -237,14 +238,14 @@ export default function SubmitEvent() {
                 <label className="block text-sm font-medium text-foreground mb-2">
                   Full Address
                 </label>
-                <input
-                  type="text"
-                  {...register("locationAddress")}
+                <GooglePlacesAutocomplete
+                  value={watch("locationAddress") || ""}
+                  onChange={(value) => setValue("locationAddress", value)}
                   placeholder="Street address, city, state, zip"
                   className="w-full px-4 py-3 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-accent"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  Google Places integration coming soon for address validation
+                  Start typing to see address suggestions powered by Google Places
                 </p>
               </div>
 
