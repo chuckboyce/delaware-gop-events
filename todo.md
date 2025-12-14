@@ -29,6 +29,7 @@
 - [x] Implement approve/reject functionality for organizer requests
 - [x] Implement event editing (users edit own, admins override any)
 - [x] Add success confirmation message after event submission
+- [x] Make logo clickable to return home
 - [ ] Write vitest tests for admin procedures
 
 ## Phase 4: Public Event Listing

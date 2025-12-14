@@ -21,12 +21,15 @@ export default function Home() {
       {/* Navigation */}
       <nav className="bg-primary text-primary-foreground shadow-md">
         <div className="container flex items-center justify-between py-4">
-          <div className="flex items-center gap-2">
+          <button
+            onClick={() => setLocation("/")}
+            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+          >
             <div className="w-8 h-8 bg-accent rounded-md flex items-center justify-center font-bold">
               DE
             </div>
             <h1 className="text-xl font-bold">Delaware Right Now</h1>
-          </div>
+          </button>
           <div className="flex items-center gap-4">
             <button
               onClick={() => setLocation("/events")}
