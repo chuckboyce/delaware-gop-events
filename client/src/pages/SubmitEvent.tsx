@@ -80,7 +80,18 @@ export default function SubmitEvent() {
         visibility: data.visibility,
       });
 
-      toast.success("Event submitted successfully!");
+      // Show appropriate success message based on user type
+      if (eventResult.status === "approved") {
+        toast.success("Event submitted and approved!", {
+          description: "Your event is now live on Delaware Right Now and in our RSS feed.",
+          duration: 5000,
+        });
+      } else {
+        toast.success("Event submitted for review!", {
+          description: "An admin will review your event shortly and it will appear once approved.",
+          duration: 5000,
+        });
+      }
 
       // Submit organizer request if requested
       if (data.requestLogin && data.organizationName) {
@@ -93,7 +104,10 @@ export default function SubmitEvent() {
           message: data.message,
         });
 
-        toast.success("Organizer request submitted! We'll review it and contact you soon.");
+        toast.success("Organizer access requested!", {
+          description: "We will review your request and contact you within 24 hours.",
+          duration: 5000,
+        });
       }
 
       // Redirect to events page
