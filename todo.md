@@ -34,6 +34,7 @@
 - [ ] Fix Google Places autocomplete not loading (debug API key)
 - [ ] Add fallback full address field with street autocomplete
 - [x] Remove latitude/longitude display fields from form (save silently to database)
+- [x] Add organizer/organization filtering to events listing
 - [ ] Write vitest tests for admin procedures
 
 ## Phase 4: Public Event Listing

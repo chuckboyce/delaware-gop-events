@@ -12,6 +12,7 @@ export default function Events() {
   const [searchQuery, setSearchQuery] = useState("");
   const [eventTypeFilter, setEventTypeFilter] = useState<string>("all");
   const [dateRangeFilter, setDateRangeFilter] = useState<"upcoming" | "all">("upcoming");
+  const [organizationFilter, setOrganizationFilter] = useState<number | "all">("all");
 
   const { data: eventsData, isLoading } = trpc.events.list.useQuery({});
   const events = eventsData?.events || [];
@@ -37,6 +38,11 @@ export default function Events() {
       filtered = filtered.filter((event) => event.eventType === eventTypeFilter);
     }
 
+    // Organization filter
+    if (organizationFilter !== "all") {
+      filtered = filtered.filter((event) => event.organizationId === organizationFilter);
+    }
+
     // Date range filter
     if (dateRangeFilter === "upcoming") {
       const now = new Date();
@@ -47,7 +53,21 @@ export default function Events() {
     filtered.sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
 
     return filtered;
-  }, [events, searchQuery, eventTypeFilter, dateRangeFilter]);
+  }, [events, searchQuery, eventTypeFilter, dateRangeFilter, organizationFilter]);
+
+  // Get unique organizations from events (map organizationId to first event with that ID)
+  const organizationMap = useMemo(() => {
+    const map = new Map<number, string>();
+    events.forEach((event) => {
+      if (event.organizationId && !map.has(event.organizationId)) {
+        // Use organizerName as fallback since organizationName isn't in the Event type
+        map.set(event.organizationId, event.organizerName || `Organization ${event.organizationId}`);
+      }
+    });
+    return map;
+  }, [events]);
+
+
 
   const getVisibilityIcon = (visibility: string) => {
     switch (visibility) {
@@ -166,6 +186,27 @@ export default function Events() {
               </select>
             </div>
           </div>
+
+          {/* Organization Filter */}
+          {organizationMap.size > 0 && (
+            <div className="mt-6">
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Filter by Organization
+              </label>
+              <select
+                value={organizationFilter === "all" ? "all" : String(organizationFilter)}
+                onChange={(e) => setOrganizationFilter(e.target.value === "all" ? "all" : parseInt(e.target.value))}
+                className="w-full px-4 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-accent"
+              >
+                <option value="all">All Organizations</option>
+                {Array.from(organizationMap.entries()).map(([orgId, orgName]) => (
+                  <option key={orgId} value={String(orgId)}>
+                    {orgName}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {/* RSS Feed Link */}
           <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-md">

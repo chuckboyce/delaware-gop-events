@@ -2,6 +2,7 @@ import { and, asc, between, desc, eq, gte, ilike, lte, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { Event, InsertEvent, InsertUser, Organization, InsertOrganization, OrganizerAccess, InsertOrganizerAccess, OrganizerRequest, InsertOrganizerRequest, events, organizations, organizerAccess, organizerRequests, users } from "../drizzle/schema";
 import { ENV } from './_core/env';
+import { getTableColumns } from "drizzle-orm";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
